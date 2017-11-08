@@ -1,5 +1,17 @@
 from pyspark import SparkConf, SparkContext
-from Helpers import loadMovieNames, parseInput
+from Helpers import loadMovieNames
+
+def parseInput(line):
+	"""
+	Funciton that parses through a line and returns a tuple in the form of
+	(movieID, (rating, 1.0)).
+	Args:
+		line: line to be parsed
+	"""
+	fields = line.split()
+	# (movieID, (rating, 1.0)). second subelem of second element is to keep track
+	# of the count
+	return (int(fields[1]), (float(fields[2]), 1.0))
 
 if __name__ == '__main__':
 	# creating a Spark Configuration object by passing the config name to the constructor

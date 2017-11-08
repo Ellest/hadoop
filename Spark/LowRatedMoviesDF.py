@@ -1,9 +1,22 @@
-from pyspark.sql import SparkSession, Row, functions
-from Helpers import loadMovieNames, parseInput
+from pyspark.sql import SparkSession, Row, functions, types
+from Helpers import loadMovieNames
+import json
 
 def parseRating(line):
 	cols = line.split()
-	return (int(cols[0]), float(cols[1]))
+	return Row(movieID = int(cols[1]), rating = float(cols[2]))
+
+def movieNameDF(file_path):
+	with open(file_path) as f:
+		for l in f:
+			
+
+"""
+TODO:
+
+	Implement with struct (types)
+
+"""
 
 if __name__ =='__main__':
 
@@ -22,31 +35,31 @@ if __name__ =='__main__':
 	# convert to RDD
 	movies = data.map(parseRating)
 
-	# However, I think it would be better to use collect() to bring the RDD contents 
-	# back to the driver, because foreach executes on the worker nodes and the outputs 
-	# may not necessarily appear in your driver / shell (it probably will in local mode, 
-	# but not when running on a cluster).
-	for m in movies.collect():
-		print(m)
+	# Better to use collect() to bring the RDD contents back to the driver, because 
+	# foreach executes on the worker nodes and the outputs may not necessarily 
+	# appear in your driver / shell (it probably will in local mode, but not when
+	# running on a cluster
+	#for m in movies.collect():
+	#	print(m)
 
 	# creating a data frame out of the RDD
-	moviesDataset = movies.createDataFrame(movies)
+	moviesDataset = spark.createDataFrame(movies)
 
 	# These fields are the column names in the HDFS 
 	# This was defined when the data file was uploaded to HDFS using Ambari
 	# Think of this as a table that exists on the HDFS
-	movieAverage = movieDataset.groupBy("movieID").avg("rating")
+	movieAverage = moviesDataset.groupBy("movieID").avg("rating")
 
-	voteCount = movieDataset.groupBy("movieID").count()
+	voteCount = moviesDataset.groupBy("movieID").count()
 
 	merged = movieAverage.join(voteCount, "movieID")
 
 	# Pay attention to the name schema for aggregated columns
 	topTen = merged.orderBy("avg(rating)").take(10)
 
-	# could do another join? or is this less efficient
-	withNames = topTen.join(movieNames, "movieID")
-
+	nameDF = movieNameDF('ml-100k/u.item')
+	#for rowObj in topTen:
+		
 
 
 
