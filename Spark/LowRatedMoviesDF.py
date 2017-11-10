@@ -8,8 +8,9 @@ def parseRating(line):
 
 def movieNameDF(file_path):
 	with open(file_path) as f:
-		for l in f:
-			
+		for line in f:
+			tokens = line.split('|')
+
 
 """
 TODO:
@@ -57,9 +58,24 @@ if __name__ =='__main__':
 	# Pay attention to the name schema for aggregated columns
 	topTen = merged.orderBy("avg(rating)").take(10)
 
-	nameDF = movieNameDF('ml-100k/u.item')
-	#for rowObj in topTen:
-		
+	# RDD of strings
+	lines = spark.sparkContext.textFile('ml-100k/u.item')
 
+	# dict of dicts?
+	medium = lines.map(lambda x: x.split('|'))
 
+	# Dataset conversion
+	rows = medium.map(lambda m: Row(movieID=m[0], movieName=m[1]))
+
+	# Creating DF
+	metaDF = spark.createDataFrame(rows)
+
+	tenDF = spark.createDataFrame(topTen)
+
+	# .join(target, [columns], type)
+	merged = tenDF.join(metaDF, ['movieID'], 'inner')
+	
+	merged.show()
+
+	spark.stop()
 
